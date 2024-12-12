@@ -1,9 +1,10 @@
 package evaluacion.daw_ef.controller;
 
-import evaluacion.daw_ef.entity.Car;
+import evaluacion.daw_ef.dto.CarDto;
+import evaluacion.daw_ef.dto.CardCreateDto;
+import evaluacion.daw_ef.dto.CardDetailDto;
+import evaluacion.daw_ef.response.*;
 import evaluacion.daw_ef.service.CarService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,59 +20,93 @@ public class CarController {
         this.carService = carService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<Car>> getAllCars() {
-        List<Car> cars = carService.findAll();
-        return ResponseEntity.ok(cars);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Car> getCarById(@PathVariable Integer id) {
-        Optional<Car> car = carService.findById(id);
-        return car.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public ResponseEntity<Car> createCar(@RequestBody Car car) {
-        Car savedCar = carService.save(car);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedCar);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Car> updateCar(@PathVariable Integer id, @RequestBody Car carDetails) {
-        Optional<Car> carOptional = carService.findById(id);
-        if (carOptional.isPresent()) {
-            Car car = carOptional.get();
-            car.setMake(carDetails.getMake());
-            car.setModel(carDetails.getModel());
-            car.setYear(carDetails.getYear());
-            car.setVin(carDetails.getVin());
-            car.setLicensePlate(carDetails.getLicensePlate());
-            car.setOwnerName(carDetails.getOwnerName());
-            car.setOwnerContact(carDetails.getOwnerContact());
-            car.setPurchaseDate(carDetails.getPurchaseDate());
-            car.setMileage(carDetails.getMileage());
-            car.setEngineType(carDetails.getEngineType());
-            car.setColor(carDetails.getColor());
-            car.setInsuranceCompany(carDetails.getInsuranceCompany());
-            car.setInsurancePolicyNumber(carDetails.getInsurancePolicyNumber());
-            car.setRegistrationExpirationDate(carDetails.getRegistrationExpirationDate());
-            car.setServiceDueDate(carDetails.getServiceDueDate());
-            Car updatedCar = carService.save(car);
-            return ResponseEntity.ok(updatedCar);
-        } else {
-            return ResponseEntity.notFound().build();
+    @GetMapping("/all")
+    public FindCarsResponse findCars(@RequestParam(value = "id", defaultValue = "0") String id) {
+        try {
+            if (Integer.parseInt(id) > 0) {
+                Optional<CarDto> optional = carService.findAllOrById(Integer.parseInt(id));
+                if (optional.isPresent()) {
+                    CarDto carDto = optional.get();
+                    return new FindCarsResponse("01", "", List.of(carDto));
+                } else {
+                    return new FindCarsResponse("02", "Car no encontrado", null);
+                }
+            } else {
+                List<CarDto> cars = carService.findAll();
+                if (!cars.isEmpty()) {
+                    return new FindCarsResponse("01", "", cars);
+                } else {
+                    return new FindCarsResponse("03", "lista de car no encontrada", cars);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new FindCarsResponse("99", "Solicitud mal empleada", null);
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCar(@PathVariable Integer id) {
-        if (carService.findById(id).isPresent()) {
-            carService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
+    @GetMapping("/detail")
+    public FindCarByIdResponse findCarById(@RequestParam(value = "id", defaultValue = "0") String id) {
+        try {
+            if (Integer.parseInt(id) > 0) {
+                Optional<CardDetailDto> optional = carService.findById(Integer.parseInt(id));
+                if (optional.isPresent()) {
+                    CardDetailDto carDetailDto = optional.get();
+                    return new FindCarByIdResponse("01", "", carDetailDto);
+                } else {
+                    return new FindCarByIdResponse("02", "Car no encontrado", null);
+                }
+            } else {
+                return new FindCarByIdResponse("03", "El id debe ser un entero", null);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new FindCarByIdResponse("99", "Solicitud mal empleada", null);
+        }
+    }
+
+    @PostMapping("/create")
+    public CreateCarResponse createCar(@RequestBody CardCreateDto cardCreateDto) {
+        try {
+            boolean created = carService.createCar(cardCreateDto);
+            if (created) {
+                return new CreateCarResponse("01", "Car creado exitosamente");
+            } else {
+                return new CreateCarResponse("02", "Car no ha sido creado");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new CreateCarResponse("99", "Valores ingresados no validos");
+        }
+    }
+
+    @PutMapping("/update")
+    public UpdateCarResponse updateCar(@RequestBody CardDetailDto cardDetailDto) {
+        try {
+            boolean updated = carService.updateCar(cardDetailDto);
+            if (updated) {
+                return new UpdateCarResponse("01", "Car actualizado exitosamente");
+            } else {
+                return new UpdateCarResponse("02", "Fallo al actualizar el car");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new UpdateCarResponse("99", "Valores no validos");
+        }
+    }
+
+    @DeleteMapping("/delete")
+    public DeleteCarResponse deleteCar(@RequestParam(value = "id") int id) {
+        try {
+            boolean deleted = carService.deleteCar(id);
+            if (deleted) {
+                return new DeleteCarResponse("01", "Car eliminado exitosamente");
+            } else {
+                return new DeleteCarResponse("02", "Fallo al eliminar el car");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new DeleteCarResponse("99", "Valor ingresado no valido");
         }
     }
 

@@ -1,15 +1,19 @@
 package evaluacion.daw_ef.service;
 
-import evaluacion.daw_ef.entity.Car;
+import evaluacion.daw_ef.dto.CarDto;
+import evaluacion.daw_ef.dto.CardCreateDto;
+import evaluacion.daw_ef.dto.CardDetailDto;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface CarService {
 
-    List<Car> findAll(); // Obtener todos los coches
-    Optional<Car> findById(Integer id); // Obtener un coche por su ID
-    Car save(Car car); // Guardar o actualizar un coche
-    void deleteById(Integer id); // Eliminar un coche por su ID
+    List<CarDto> findAll() throws Exception;
+    Optional<CarDto> findAllOrById(int id) throws Exception;
+    Optional<CardDetailDto> findById(Integer id) throws Exception;
+    boolean updateCar(CardDetailDto cardDetailDto) throws Exception;
+    boolean deleteCar(int id) throws Exception;
+    boolean createCar(CardCreateDto cardCreateDto) throws Exception;
 
 }
